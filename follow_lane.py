@@ -32,12 +32,17 @@ class Way:
             tmp_osm_path = t.name
 
         # Run osmium getid to extract the way.
-        subprocess.run([
-            "osmium", "getid", str(self.pbf_path), f"w{self.way_id}",
-            "--add-location",
-            "-f", "osm",
-            "-o", tmp_osm_path, "--overwrite"
-        ], check=True)
+        try:
+            result = subprocess.run([
+                "osmium", "getid", str(self.pbf_path), f"w{self.way_id}",
+                "-f", "osm",
+                "-o", tmp_osm_path, "--overwrite"
+            ], check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            print("Osmium exited with error code", e.returncode)
+            print("stdout:", e.stdout)
+            print("stderr:", e.stderr)
+
 
         # Parse the .osm file.
         tree = ET.parse(tmp_osm_path)
