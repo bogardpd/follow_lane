@@ -22,4 +22,4 @@ You can also specify a bounding box:
 
 Using data source dc-roads.osm.pbf, follow the lane starting with OSM way 5973741:
 
-`follow_lane --pbf dc-roads.osm.pbf --way 5973741`
+`python follow_lane.py --pbf dc-roads.osm.pbf --way 5973741`
