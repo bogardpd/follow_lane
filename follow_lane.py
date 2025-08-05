@@ -9,13 +9,20 @@ from lxml import etree
 from shapely.geometry import LineString
 
 
+class Way():
+    """Represents an OSM way."""
+    def __init__(self, geometry: LineString, tags: dict, nodes: list[int]):
+        self.geometry: LineString = geometry
+        self.tags: dict = tags
+        self.nodes: list[int] = nodes
+
 def follow_lane(pbf_path: Path, way_id: int) -> None:
     """Follows a lane starting with the provided way."""
     way = get_way_by_id(pbf_path, way_id)
 
-    print(way)
+    print(way.geometry, way.tags, way.nodes)
 
-def get_way_by_id(pbf_path: Path, way_id: int) -> dict:
+def get_way_by_id(pbf_path: Path, way_id: int) -> Way:
     """Fetches a way from OSM data."""
     if way_id is None:
         return ValueError("Way id may not be None.")
@@ -67,7 +74,7 @@ def get_way_by_id(pbf_path: Path, way_id: int) -> dict:
         tree = ET.parse(output_file)
         root = tree.getroot()
         tags = {}
-        geometry = None
+        geometry = LineString() # Blank linestring
 
         for way in root.findall('way'):
             if way.attrib['id'] != str(way_id):
@@ -83,9 +90,10 @@ def get_way_by_id(pbf_path: Path, way_id: int) -> dict:
                 lon = float(nd.attrib['lon'])
                 nodes[node_id] = (lon, lat)
             geometry = LineString(nodes.values())
+            node_ids = list(nodes.keys())
             break
 
-        return {'tags': tags, 'geometry': geometry}
+        return Way(geometry=geometry, tags=tags, nodes=node_ids)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Follow Lane",

@@ -212,3 +212,6 @@ __marimo__/
 # OSM files
 *.osm
 *.pbf
+
+# MacOS
+.DS_Store
