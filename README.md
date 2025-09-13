@@ -1,25 +1,32 @@
 # follow_lane
-Traces individual road lanes in OpenStreetMap data.
+Traces individual road lanes in GeoPackage data.
 
 > [!NOTE]
 > This project is in progress, and significant functionality has not yet been implemented.
 
-## Setup
-
-This project requires [Osmium Tool](https://osmcode.org/osmium-tool/) to be available at the command line. On Windows, this can be installed under WSL; just be sure to also run the Python scripts from WSL.
-
-This project requires downloaded OpenStreetMap data in PBF (.osm.pbf) format. One source for this at the continent, country, or region level is [https://download.geofabrik.de/](https://download.geofabrik.de/).
-
-Since this data can be large for any sizable region, consider filtering it to only include roads:
-
-`osmium tags-filter us-latest.osm.pbf nwr/highway -o us-roads.osm.pbf`
-
-You can also specify a bounding box:
-
-`osmium extract us-roads.osm.pbf -b -78.7,38.4,-76.4,39.5 -o dc-roads.osm.pbf`
-
 ## Usage
 
-Using data source dc-roads.osm.pbf, follow the lane starting with OSM way 5973741:
+Using data source roads.gpkg, follow the leftmost lane of feature 12345:
 
-`python follow_lane.py --pbf dc-roads.osm.pbf --way 5973741`
+## GeoPackage Format
+
+The source argument must point to a GeoPackage file with the following layers:
+
+### road_segments (LineString)
+
+Geometry of road segments (where each segment contains a consistent number of lanes). Additional fields are acceptable but ignored.
+
+### connections (No Geometry)
+
+A table documenting the interaction of lanes between road segments, with the following format:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| fid   | int64 | Connection feature ID |
+| from_segment_fid | int64 | The segment a lane is coming from (in the direction of travel) |
+| from_lane_number | int64 | The lane number within the segment the lane is coming from. Zero-indexed, starting with the leftmost lane in the direction of travel (so the far left lane is `0`).
+| to_segment_id | int64 | The segment a lane is going to (in the direction of travel) |
+| to_lane_number | int64 | The lane number within the segment the lane is going to. Zero-indexed, starting with the leftmost lane in the direction of travel (so the far left lane is `0`).
+| crosses_paint | bool | If a lane begins or ends in such a way that a driver can't enter it (new lanes) or exit it (ending lanes) without crossing a paint line, this should be set to true. Otherwise, false. |
+
+In most cases, lanes will line up (lane 0 in segment n will connect to lane 0 in segment n + 1). However, this can also be used to document lanes splitting (lane 0 could go to two different lanes in the same segment, or a different lane in two different segments) or merging (two different lanes in the same segment become connect to a single lane in the following segment, or lanes from two different segments connect to a single lane in another segment). Each lane connection will have its own row.
