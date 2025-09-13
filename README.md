@@ -16,7 +16,7 @@ The source argument must point to a GeoPackage file with the following layers:
 
 Geometry of road segments (where each segment contains a consistent number of lanes). Additional fields are acceptable but ignored.
 
-### connections (No Geometry)
+### connectors (No Geometry)
 
 A table documenting the interaction of lanes between road segments, with the following format:
 
