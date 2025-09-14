@@ -6,7 +6,7 @@ import sqlite3
 import networkx as nx
 
 
-def follow_lane(source: Path, start_fid: int, start_lane) -> None:
+def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     """Follows a lane starting with the provided fid and lane number."""
     print(source, start_fid, start_lane)
     g = build_graph(source)
@@ -46,12 +46,12 @@ if __name__ == "__main__":
     parser.add_argument('--fid',
         help="Feature id to start from",
         type=int,
-        required=True,
+        required=False,
     )
     parser.add_argument('--lane',
         help="Lane number to start from",
         type=int,
-        required=True
+        required=False
     )
     args = parser.parse_args()
 
