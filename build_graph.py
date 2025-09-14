@@ -46,3 +46,4 @@ if __name__ == "__main__":
 
     graph = build_graph(args.source)
     nx.write_graphml(graph, args.output)
+    print(f"Wrote graph to {args.output}.")
