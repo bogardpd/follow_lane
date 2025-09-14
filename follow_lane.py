@@ -2,7 +2,6 @@
 
 from pathlib import Path
 import argparse
-import networkx as nx
 from build_graph import build_graph
 
 
