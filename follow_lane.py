@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import argparse
+import networkx as nx
 from build_graph import build_graph
 
 
@@ -9,7 +10,9 @@ def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     """Follows a lane starting with the provided fid and lane number."""
     print(source, start_fid, start_lane)
     g = build_graph(source)
-    print(g)
+    start = (start_fid, start_lane)
+    lanes_forward = nx.descendants(g, start)
+    print(lanes_forward)
 
 
 if __name__ == "__main__":
