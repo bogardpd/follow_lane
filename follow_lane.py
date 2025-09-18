@@ -3,8 +3,11 @@
 from pathlib import Path
 from typing import List, Tuple
 import argparse
+import geopandas as gpd
 import networkx as nx
+import matplotlib.pyplot as plt
 from build_graph import build_graph
+
 
 Node = Tuple[int, int]
 
@@ -12,8 +15,13 @@ def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     """Follows a lane starting with the provided fid and lane number."""
     g = build_graph(source)
     start = (start_fid, start_lane)
-    lanes_forward: List[Node] = sorted({start} | nx.descendants(g, start))
-    print(lanes_forward)
+    lanes_forward: List[Node] = sorted(nx.descendants(g, start))
+    fids_forward: List[int] = [l[0] for l in lanes_forward]
+
+    gdf = gpd.read_file(source, layer='road_segments')
+    gdf_forward = gdf[gdf.index.isin(fids_forward)]
+    gdf_forward.plot()
+    plt.show()
 
 
 if __name__ == "__main__":
