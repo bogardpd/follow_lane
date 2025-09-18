@@ -17,10 +17,19 @@ def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     start = (start_fid, start_lane)
     lanes_forward: List[Node] = sorted(nx.descendants(g, start))
     fids_forward: List[int] = [l[0] for l in lanes_forward]
+    lanes_backward: List[Node] = sorted(nx.ancestors(g, start))
+    fids_backward: List[int] = [l[0] for l in lanes_backward]
+
+    fig, ax = plt.subplots(1, 1)
 
     gdf = gpd.read_file(source, layer='road_segments')
+    gdf_start = gdf[gdf.index.isin([start_fid])]
     gdf_forward = gdf[gdf.index.isin(fids_forward)]
-    gdf_forward.plot()
+    gdf_backward = gdf[gdf.index.isin(fids_backward)]
+    gdf_start.plot(ax=ax, label="Start", color='black')
+    gdf_forward.plot(ax=ax, label="Forward", color='blue')
+    gdf_backward.plot(ax=ax, label="Backward", color='orange')
+    fig.tight_layout()
     plt.show()
 
 
