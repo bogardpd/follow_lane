@@ -1,17 +1,18 @@
 """Follows a road lane through GeoPackage data."""
 
 from pathlib import Path
+from typing import List, Tuple
 import argparse
 import networkx as nx
 from build_graph import build_graph
 
+Node = Tuple[int, int]
 
 def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     """Follows a lane starting with the provided fid and lane number."""
-    print(source, start_fid, start_lane)
     g = build_graph(source)
     start = (start_fid, start_lane)
-    lanes_forward = nx.descendants(g, start)
+    lanes_forward: List[Node] = sorted({start} | nx.descendants(g, start))
     print(lanes_forward)
 
 
