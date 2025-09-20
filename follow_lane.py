@@ -29,25 +29,9 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
         nx.write_graphml(g, output_types['.graphml'])
         print(f"Wrote graph to {output_types['.graphml']}.")
 
-
-    start_node = tuple(start)
-    lanes_forward: List[Node] = sorted(nx.descendants(g, start_node))
-    fids_forward: List[int] = [l[0] for l in lanes_forward]
-    lanes_backward: List[Node] = sorted(nx.ancestors(g, start_node))
-    fids_backward: List[int] = [l[0] for l in lanes_backward]
-
-    fig, ax = plt.subplots(1, 1)
-
-    gdf_start = segments[segments.index.isin([start_node[0]])]
-    gdf_forward = segments[segments.index.isin(fids_forward)]
-    gdf_backward = segments[segments.index.isin(fids_backward)]
-    gdf_start.plot(ax=ax, label="Start", color='black')
-    if len(gdf_forward) > 0:
-        gdf_forward.plot(ax=ax, label="Forward", color='blue')
-    if len(gdf_backward) > 0:
-        gdf_backward.plot(ax=ax, label="Backward", color='orange')
-    fig.tight_layout()
-    plt.show()
+    # Plot segments.
+    if start is not None:
+        plot_segments(g, segments, start)
 
 def build_graph(connectors: pd.DataFrame) -> nx.DiGraph:
     """Creates a directed graph from connectors data."""
@@ -67,6 +51,27 @@ def build_graph(connectors: pd.DataFrame) -> nx.DiGraph:
         g.add_edge(n1, n2, crosses_paint=bool(r['crosses_paint']==1))
 
     return g
+
+def plot_segments(g, segments, start):
+    """Plots a graph of road segments from a starting node."""
+    start_node = tuple(start)
+    lanes_forward: List[Node] = sorted(nx.descendants(g, start_node))
+    fids_forward: List[int] = [l[0] for l in lanes_forward]
+    lanes_backward: List[Node] = sorted(nx.ancestors(g, start_node))
+    fids_backward: List[int] = [l[0] for l in lanes_backward]
+
+    fig, ax = plt.subplots(1, 1)
+
+    gdf_start = segments[segments.index.isin([start_node[0]])]
+    gdf_forward = segments[segments.index.isin(fids_forward)]
+    gdf_backward = segments[segments.index.isin(fids_backward)]
+    gdf_start.plot(ax=ax, label="Start", color='black')
+    if len(gdf_forward) > 0:
+        gdf_forward.plot(ax=ax, label="Forward", color='blue')
+    if len(gdf_backward) > 0:
+        gdf_backward.plot(ax=ax, label="Backward", color='orange')
+    fig.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
