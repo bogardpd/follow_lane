@@ -4,7 +4,7 @@ Traces individual road lanes in GeoPackage data.
 > [!NOTE]
 > This project is in progress, and significant functionality has not yet been implemented.
 
-## Scripts
+## Usage
 
 ### follow_lane
 
@@ -12,17 +12,17 @@ Accepts a starting road segment and lane number and follows the specified lane t
 
 #### Usage
 
-Using data source roads.gpkg, follow the leftmost lane of feature 12345:
+`python follow_lane.py`
 
-`python follow_lane.py --source roads.gpkg --fid 12345 --lane 0`
+Options
 
-### build_graph
+- `--source SOURCE` (required) GeoPackage source path
+- `--start fid lane` (optional) Starts following from the node with the specified fid and lane number (zero-indexed)
+- `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
 
-Creates a directed graph of the GeoPackage lane data and exports it in GraphML format.
+Using data source roads.gpkg, follow the leftmost lane of feature 12345 and export to roads.graphml:
 
-#### Usage
-
-`python build_graph.py --source roads.gpkg --output roads.graphml`
+`python follow_lane.py --source roads.gpkg --start 12345 0 --output roads.graphml`
 
 ## GeoPackage Format
 
