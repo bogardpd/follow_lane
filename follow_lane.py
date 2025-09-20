@@ -5,6 +5,7 @@ from typing import List, Tuple
 import argparse
 import sqlite3
 
+import pandas as pd
 import geopandas as gpd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -16,7 +17,14 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
     """Follows a lane."""
     output_types = {o.suffix: o for o in output}
 
-    g = build_graph(source)
+    # Load dataframes from source.
+    con = sqlite3.connect(source)
+    connectors = pd.read_sql_query("SELECT * FROM connectors", con)
+    segments = gpd.read_file(source, layer='road_segments')
+    con.close()
+
+    # Create directed graph.
+    g = build_graph(connectors)
     if '.graphml' in output_types:
         nx.write_graphml(g, output_types['.graphml'])
         print(f"Wrote graph to {output_types['.graphml']}.")
@@ -30,11 +38,9 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
 
     fig, ax = plt.subplots(1, 1)
 
-    gdf = gpd.read_file(source, layer='road_segments')
-    print(gdf.crs)
-    gdf_start = gdf[gdf.index.isin([start_node[0]])]
-    gdf_forward = gdf[gdf.index.isin(fids_forward)]
-    gdf_backward = gdf[gdf.index.isin(fids_backward)]
+    gdf_start = segments[segments.index.isin([start_node[0]])]
+    gdf_forward = segments[segments.index.isin(fids_forward)]
+    gdf_backward = segments[segments.index.isin(fids_backward)]
     gdf_start.plot(ax=ax, label="Start", color='black')
     if len(gdf_forward) > 0:
         gdf_forward.plot(ax=ax, label="Forward", color='blue')
@@ -43,26 +49,22 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
     fig.tight_layout()
     plt.show()
 
-def build_graph(source: Path) -> nx.Graph:
+def build_graph(connectors: pd.DataFrame) -> nx.DiGraph:
     """Creates a directed graph from connectors data."""
     g = nx.DiGraph()
-    con = sqlite3.connect(source)
-    query = """
-        SELECT from_segment_fid, from_lane_number,
-        to_segment_fid, to_lane_number, crosses_paint
-        FROM connectors
-    """
-    cur = con.execute(query)
-    results = cur.fetchall()
 
-    for r in results:
-        n1 = (r[0],r[1]) # From (segment, lane) pair
-        n2 = (r[2],r[3]) # To (segment, lane) pair
-        g.add_node(n1, segment=str(r[0]), lane=str(r[1]))
-        g.add_node(n2, segment=str(r[2]), lane=str(r[3]))
-        g.add_edge(n1, n2, crosses_paint=r[4]==1)
-
-    con.close()
+    for _, r in connectors.iterrows():
+        n1 = (r['from_segment_fid'], r['from_lane_number'])
+        n2 = (r['to_segment_fid'], r['to_lane_number'])
+        g.add_node(n1,
+            segment=str(r['from_segment_fid']),
+            lane=str(r['from_lane_number']),
+        )
+        g.add_node(n2,
+            segment=str(r['to_segment_fid']),
+            lane=str(r['to_lane_number']),
+        )
+        g.add_edge(n1, n2, crosses_paint=bool(r['crosses_paint']==1))
 
     return g
 
