@@ -4,9 +4,25 @@ Traces individual road lanes in GeoPackage data.
 > [!NOTE]
 > This project is in progress, and significant functionality has not yet been implemented.
 
-## Usage
+## Scripts
+
+### follow_lane
+
+Accepts a starting road segment and lane number and follows the specified lane through its branches.
+
+#### Usage
 
 Using data source roads.gpkg, follow the leftmost lane of feature 12345:
+
+`python follow_lane.py --source roads.gpkg --fid 12345 --lane 0`
+
+### build_graph
+
+Creates a directed graph of the GeoPackage lane data and exports it in GraphML format.
+
+#### Usage
+
+`python build_graph.py --source roads.gpkg --output roads.graphml`
 
 ## GeoPackage Format
 

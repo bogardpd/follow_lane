@@ -23,12 +23,15 @@ def follow_lane(source: Path, start_fid: int, start_lane: int) -> None:
     fig, ax = plt.subplots(1, 1)
 
     gdf = gpd.read_file(source, layer='road_segments')
+    print(gdf.crs)
     gdf_start = gdf[gdf.index.isin([start_fid])]
     gdf_forward = gdf[gdf.index.isin(fids_forward)]
     gdf_backward = gdf[gdf.index.isin(fids_backward)]
     gdf_start.plot(ax=ax, label="Start", color='black')
-    gdf_forward.plot(ax=ax, label="Forward", color='blue')
-    gdf_backward.plot(ax=ax, label="Backward", color='orange')
+    if len(gdf_forward) > 0:
+        gdf_forward.plot(ax=ax, label="Forward", color='blue')
+    if len(gdf_backward) > 0:
+        gdf_backward.plot(ax=ax, label="Backward", color='orange')
     fig.tight_layout()
     plt.show()
 
