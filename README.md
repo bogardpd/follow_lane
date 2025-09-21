@@ -19,10 +19,17 @@ Options
 - `--source SOURCE` (required) GeoPackage source path
 - `--start fid lane` (optional) Starts following from the node with the specified fid and lane number (zero-indexed)
 - `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
+- `--paint` If present, allows starting or ending lanes to cross dotted paint lines.
 
 Using data source roads.gpkg, follow the leftmost lane of feature 12345 and export to roads.graphml:
 
 `python follow_lane.py --source roads.gpkg --start 12345 0 --output roads.graphml`
+
+## Lanes
+
+For this project, a lane is defined as a continuous stretch of road between two painted lines (which may be solid or dashed).
+
+If two adjacent lanes merge into one without either movement crossing a solid or dashed paint line, the lane follower follows both of them into the new lane. Likewise, if a lane splits into two without either movement crossing a solid or dashed paint line, the lane follower will follow both branches. (If the `--paint` flag is set, the lane follower will follow a lane merge or split even if it crosses a paint line.)
 
 ## GeoPackage Format
 

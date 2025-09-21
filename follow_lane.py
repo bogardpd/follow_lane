@@ -13,7 +13,12 @@ import matplotlib.pyplot as plt
 
 Node = Tuple[int, int]
 
-def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
+def follow_lane(
+    source: Path,
+    start: List[int],
+    output: List[Path],
+    allow_paint: bool = False,
+) -> None:
     """Follows a lane."""
     output_types = {o.suffix: o for o in output}
 
@@ -28,7 +33,7 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
     con.close()
 
     # Create directed graph.
-    g = build_graph(connectors)
+    g = build_graph(connectors, allow_paint)
     if '.graphml' in output_types:
         nx.write_graphml(g, output_types['.graphml'])
         print(f"Wrote graph to {output_types['.graphml']}.")
@@ -37,11 +42,18 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
     if start is not None:
         plot_segments(g, segments, start)
 
-def build_graph(connectors: pd.DataFrame) -> nx.DiGraph:
+def build_graph(
+    connectors: pd.DataFrame,
+    allow_paint: bool = False,
+) -> nx.DiGraph:
     """Creates a directed graph from connectors data."""
+    print("Building graph...")
     g = nx.DiGraph()
 
     for _, r in connectors.iterrows():
+        crosses_paint = bool(r['crosses_paint'] == 1)
+        if (not allow_paint) and crosses_paint:
+            continue
         n1 = (r['from_segment_fid'], r['from_lane_number'])
         n2 = (r['to_segment_fid'], r['to_lane_number'])
         g.add_node(n1,
@@ -52,8 +64,9 @@ def build_graph(connectors: pd.DataFrame) -> nx.DiGraph:
             segment=str(r['to_segment_fid']),
             lane=str(r['to_lane_number']),
         )
-        g.add_edge(n1, n2, crosses_paint=bool(r['crosses_paint']==1))
+        g.add_edge(n1, n2, crosses_paint=crosses_paint)
 
+    print(f"Created {g}.")
     return g
 
 def plot_segments(g, segments, start):
@@ -91,13 +104,18 @@ if __name__ == "__main__":
         help="Node to start following from",
         nargs=2,
         metavar=('fid', 'lane'),
-        type=int
+        type=int,
     )
     parser.add_argument('--output',
         help="Output path(s) (supports .graphml)",
         nargs='+',
         type=Path,
-        default=[]
+        default=[],
+    )
+    parser.add_argument('--paint',
+        help="Allow paint line crossings for lanes starting or ending",
+        action='store_true',
+        default=False,
     )
     args = parser.parse_args()
-    follow_lane(args.source, args.start, args.output)
+    follow_lane(args.source, args.start, args.output, args.paint)
