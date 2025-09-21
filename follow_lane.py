@@ -20,7 +20,11 @@ def follow_lane(source: Path, start: List[int], output: List[Path]) -> None:
     # Load dataframes from source.
     con = sqlite3.connect(source)
     connectors = pd.read_sql_query("SELECT * FROM connectors", con)
-    segments = gpd.read_file(source, layer='road_segments')
+    segments = gpd.read_file(source,
+        layer='road_segments',
+        engine='pyogrio', # Needed to use fid_as_index
+        fid_as_index=True,
+    )
     con.close()
 
     # Create directed graph.
