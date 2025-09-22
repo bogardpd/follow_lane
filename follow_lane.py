@@ -24,13 +24,20 @@ def follow_lane(
 
     # Load dataframes from source.
     con = sqlite3.connect(source)
-    connectors = pd.read_sql_query("SELECT * FROM connectors", con)
+    connectors = pd.read_sql_query(
+        "SELECT * FROM connectors",
+        con,
+        index_col='fid',
+    )
     segments = gpd.read_file(source,
         layer='road_segments',
         engine='pyogrio', # Needed to use fid_as_index
         fid_as_index=True,
     )
     con.close()
+
+    # Validate connectors.
+    validate_connectors(connectors)
 
     # Create directed graph.
     g = build_graph(connectors, allow_paint)
@@ -89,6 +96,49 @@ def plot_segments(g, segments, start):
         gdf_backward.plot(ax=ax, label="Backward", color='orange')
     fig.tight_layout()
     plt.show()
+
+def validate_connectors(connectors: pd.DataFrame):
+    """Checks connectors for errors."""
+
+    # Check that every from segment:lane has at least one matching to
+    # segment:lane and vice versa. Terminal nodes are ignored.
+    df_con_val = connectors.copy()
+    
+    # Get all segments that have from connectors from and all segments that
+    # have to connectors.
+    segs_with_from = df_con_val['from_segment_fid'].unique()
+    segs_with_to = df_con_val['to_segment_fid'].unique()
+
+    # For all from segments which have a to, check if their from has a to.
+    from_check = df_con_val[df_con_val['from_segment_fid'].isin(segs_with_to)]
+    from_check = from_check[['from_segment_fid', 'from_lane_number']]
+    to_check = df_con_val[df_con_val['to_segment_fid'].isin(segs_with_from)]
+    to_check = to_check[['to_segment_fid', 'to_lane_number']]
+    from_comp = df_con_val.set_index(['from_segment_fid', 'from_lane_number'])
+    from_comp['exists'] = True
+    to_comp = df_con_val.set_index(['to_segment_fid', 'to_lane_number'])
+    to_comp['exists'] = True
+    from_join = from_check.join(to_comp['exists'],
+        on=['from_segment_fid', 'from_lane_number'], how='left',
+    )
+    to_join = to_check.join(from_comp['exists'],
+        on=['to_segment_fid', 'to_lane_number'], how='left',
+    )
+
+    # Check if there are any rows with NA values in the left joins. If so,
+    # these rows didn't have a matching segment:lane.
+    from_fail = from_join[from_join['exists'].isna()]
+    to_fail = to_join[to_join['exists'].isna()]
+    if len(from_fail) > 0:
+        raise ValueError(
+            "Missing matching 'to' lanes at 'from' connector fid(s) " +
+            str(from_fail.index.tolist())
+        )
+    if len(to_fail) > 0:
+        raise ValueError(
+            "Missing matching 'from' lanes at 'to' connector fid(s) " +
+            str(to_fail.index.tolist())
+        )
 
 
 if __name__ == "__main__":
