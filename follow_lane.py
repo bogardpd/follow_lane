@@ -109,6 +109,15 @@ def validate_connectors(connectors: pd.DataFrame):
             f"Connector(s) with NA values: {na_rows.index.tolist()}"
         )
 
+    # Check if any connectors have the same from and to segment.
+    self_rows = df_con_val[
+        df_con_val['from_segment_fid'] == df_con_val['to_segment_fid']
+    ]
+    if len(self_rows) > 0:
+        raise ValueError(
+            f"Connector(s) with same from and to: {self_rows.index.tolist()}"
+        )
+
     # Check that every from segment:lane has at least one matching to
     # segment:lane and vice versa. If a from segment has zero matching
     # to segments, or a to segment has zero from segments, it is
