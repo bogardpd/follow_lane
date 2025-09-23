@@ -100,16 +100,22 @@ def plot_segments(g, segments, start):
 def validate_connectors(connectors: pd.DataFrame):
     """Checks connectors for errors."""
 
-    # Check that every from segment:lane has at least one matching to
-    # segment:lane and vice versa. Terminal nodes are ignored.
     df_con_val = connectors.copy()
-    
-    # Get all segments that have from connectors from and all segments that
-    # have to connectors.
+
+    # Check if any connectors rows have null values.
+    na_rows = df_con_val[df_con_val.isna().any(axis=1)]
+    if len(na_rows) > 0:
+        raise ValueError(
+            f"Connector(s) with NA values: {na_rows.index.tolist()}"
+        )
+
+    # Check that every from segment:lane has at least one matching to
+    # segment:lane and vice versa. If a from segment has zero matching
+    # to segments, or a to segment has zero from segments, it is
+    # considered to be a terminal node and will not trigger a validation
+    # error.
     segs_with_from = df_con_val['from_segment_fid'].unique()
     segs_with_to = df_con_val['to_segment_fid'].unique()
-
-    # For all from segments which have a to, check if their from has a to.
     from_check = df_con_val[df_con_val['from_segment_fid'].isin(segs_with_to)]
     from_check = from_check[['from_segment_fid', 'from_lane_number']]
     to_check = df_con_val[df_con_val['to_segment_fid'].isin(segs_with_from)]
@@ -124,9 +130,6 @@ def validate_connectors(connectors: pd.DataFrame):
     to_join = to_check.join(from_comp['exists'],
         on=['to_segment_fid', 'to_lane_number'], how='left',
     )
-
-    # Check if there are any rows with NA values in the left joins. If so,
-    # these rows didn't have a matching segment:lane.
     from_fail = from_join[from_join['exists'].isna()]
     to_fail = to_join[to_join['exists'].isna()]
     if len(from_fail) > 0:
