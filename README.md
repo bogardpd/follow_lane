@@ -47,7 +47,7 @@ A table documenting the interaction of lanes between road segments, with the fol
 |-------|------|-------------|
 | fid   | int64 | Connection feature ID |
 | from_segment_fid | int64 | The segment a lane is coming from (in the direction of travel) |
-| from_lane_number | int64 | **For regions that drive on the right**, lanes traveling in the same direction as the segment's LineString are numbered starting with 0 for the leftmost lane, and increase from there (0, 1, 2...). For lanes traveling opposite the LineString, the leftmost lane is numbered starting at -1 and decreasing from there (-1, -2, -3). **For regions that drive on the left**, the numbering should start with the rightmost lane in each direction, but otherwise follows the same rules. |
+| from_lane_number | int64 | **For regions that drive on the right**, lanes traveling in the same direction as the segment's LineString are numbered starting with 0 for the leftmost lane, and increase from there (0, 1, 2…). For lanes traveling opposite the LineString, the leftmost lane is numbered starting at -1 and decreasing from there (-1, -2, -3…). **For regions that drive on the left**, the numbering should start with the rightmost lane in each direction, but otherwise follows the same rules. |
 | to_segment_fid | int64 | The segment a lane is going to (in the direction of travel) |
 | to_lane_number | int64 | The lane number within the segment the lane is going to. Zero-indexed, starting with the leftmost lane in the direction of travel (so the far left lane is `0`).
 | crosses_paint | bool | If a lane begins or ends in such a way that a driver can't enter it (new lanes) or exit it (ending lanes) without crossing a paint line, this should be set to true. Otherwise, false. |
