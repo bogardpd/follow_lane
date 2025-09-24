@@ -45,6 +45,17 @@ def follow_lane(
         nx.write_graphml(g, output_types['.graphml'])
         print(f"Wrote graph to {output_types['.graphml']}.")
 
+    # Find loops.
+    print("Finding segments with loops...")
+    for node in g.nodes:
+        # descendants = nx.descendants(g, n)
+        looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
+        if len(looped_segs) > 0:
+            print(f"{node}\t→ {looped_segs}")
+            looped_segs_same_lane = [l for l in looped_segs if l[1] == node[1]]
+            if len(looped_segs_same_lane) > 0:
+                print("\tSame lane!")
+
     # Plot segments.
     if start is not None:
         plot_segments(g, segments, start)
@@ -61,8 +72,8 @@ def build_graph(
         crosses_paint = bool(r['crosses_paint'] == 1)
         if (not allow_paint) and crosses_paint:
             continue
-        n1 = (r['from_segment_fid'], r['from_lane_number'])
-        n2 = (r['to_segment_fid'], r['to_lane_number'])
+        n1 = (int(r['from_segment_fid']), int(r['from_lane_number']))
+        n2 = (int(r['to_segment_fid']), int(r['to_lane_number']))
         g.add_node(n1,
             segment=str(r['from_segment_fid']),
             lane=str(r['from_lane_number']),
