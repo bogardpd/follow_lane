@@ -41,20 +41,25 @@ def follow_lane(
 
     # Create directed graph.
     g = build_graph(connectors, allow_paint)
-    if '.graphml' in output_types:
-        nx.write_graphml(g, output_types['.graphml'])
-        print(f"Wrote graph to {output_types['.graphml']}.")
 
     # Find loops.
     print("Finding segments with loops...")
     for node in g.nodes:
-        # descendants = nx.descendants(g, n)
         looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
         if len(looped_segs) > 0:
             print(f"{node}\t→ {looped_segs}")
+            nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
+            nx.set_node_attributes(
+                g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
+            )
             looped_segs_same_lane = [l for l in looped_segs if l[1] == node[1]]
             if len(looped_segs_same_lane) > 0:
                 print("\tSame lane!")
+
+    # Export GraphML.
+    if '.graphml' in output_types:
+        nx.write_graphml(g, output_types['.graphml'])
+        print(f"Wrote graph to {output_types['.graphml']}.")
 
     # Plot segments.
     if start is not None:
@@ -77,10 +82,14 @@ def build_graph(
         g.add_node(n1,
             segment=str(r['from_segment_fid']),
             lane=str(r['from_lane_number']),
+            is_seg_loop_source = False,
+            is_seg_loop_sink = False,
         )
         g.add_node(n2,
             segment=str(r['to_segment_fid']),
             lane=str(r['to_lane_number']),
+            is_seg_loop_source = False,
+            is_seg_loop_sink = False,
         )
         g.add_edge(n1, n2, crosses_paint=crosses_paint)
 
@@ -100,11 +109,11 @@ def plot_segments(g, segments, start):
     gdf_start = segments[segments.index.isin([start_node[0]])]
     gdf_forward = segments[segments.index.isin(fids_forward)]
     gdf_backward = segments[segments.index.isin(fids_backward)]
-    gdf_start.plot(ax=ax, label="Start", color='black')
-    if len(gdf_forward) > 0:
-        gdf_forward.plot(ax=ax, label="Forward", color='blue')
     if len(gdf_backward) > 0:
         gdf_backward.plot(ax=ax, label="Backward", color='orange')
+    if len(gdf_forward) > 0:
+        gdf_forward.plot(ax=ax, label="Forward", color='blue')
+    gdf_start.plot(ax=ax, label="Start", color='black', linewidth=4)
     fig.tight_layout()
     plt.show()
 
