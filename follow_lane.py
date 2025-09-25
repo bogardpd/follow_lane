@@ -47,7 +47,10 @@ def follow_lane(
     for node in g.nodes:
         looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
         if len(looped_segs) > 0:
-            print(f"{node}\t→ {looped_segs}")
+            print(
+                f"{format_node(node)} → "
+                f"{", ".join([format_node(ls) for ls in looped_segs])}"
+            )
             nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
             nx.set_node_attributes(
                 g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
@@ -171,6 +174,10 @@ def validate_connectors(connectors: pd.DataFrame):
             "Missing matching 'from' lanes at 'to' connector fid(s) " +
             str(to_fail.index.tolist())
         )
+
+def format_node(node: Node):
+    """Formats a Node as a string."""
+    return f"{node[0]}:{node[1]}"
 
 
 if __name__ == "__main__":
