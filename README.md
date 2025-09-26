@@ -35,9 +35,9 @@ If two adjacent lanes merge into one without either movement crossing a solid or
 
 The source argument must point to a GeoPackage file with the following layers:
 
-### road_segments (LineString)
+### road_segments (LineString, WGS&nbsp;84)
 
-Geometry of road segments (where each segment contains a consistent number of lanes). Additional fields are acceptable but ignored.
+Geometry of road segments (where each segment contains a consistent number of lanes). Additional fields are acceptable but ignored. Geometry should use the WGS&nbsp;84 ellipsoid.
 
 ### connectors (No Geometry)
 

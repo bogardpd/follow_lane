@@ -9,9 +9,11 @@ import pandas as pd
 import geopandas as gpd
 import networkx as nx
 import matplotlib.pyplot as plt
+from geopy import distance
 
 
 Node = Tuple[int, int]
+DIST_THRESHOLD_M = 1.0 # Maximum meter distance between segments
 
 def follow_lane(
     source: Path,
@@ -37,7 +39,7 @@ def follow_lane(
     con.close()
 
     # Validate connectors.
-    validate_connectors(connectors)
+    validate_connectors(connectors, segments)
 
     # Create directed graph.
     g = build_graph(connectors, allow_paint)
@@ -120,10 +122,12 @@ def plot_segments(g, segments, start):
     fig.tight_layout()
     plt.show()
 
-def validate_connectors(connectors: pd.DataFrame):
+def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     """Checks connectors for errors."""
 
+
     df_con_val = connectors.copy()
+    gdf_seg = segments.copy()
 
     # Check if any connectors rows have null values.
     na_rows = df_con_val[df_con_val.isna().any(axis=1)]
@@ -175,9 +179,41 @@ def validate_connectors(connectors: pd.DataFrame):
             str(to_fail.index.tolist())
         )
 
+    # Check that consecutive segments are adjacent.
+    df_con_val['dist_m'] = df_con_val.apply(
+        lambda r: _seg_distance(r, gdf_seg),
+        axis=1,
+    )
+    dist_fail = df_con_val[df_con_val['dist_m'] > DIST_THRESHOLD_M]
+    if len(dist_fail > 0):
+        print(dist_fail)
+        raise ValueError("Consecutive segments exceed distance threshold")
+
 def format_node(node: Node):
     """Formats a Node as a string."""
     return f"{node[0]}:{node[1]}"
+
+def _seg_distance(row, segments):
+    """Calculates distance between two segments."""
+    from_seg_coords = segments.loc[row['from_segment_fid']].geometry.coords
+    if row['from_lane_number'] >= 0:
+        # Forward direction, use last point
+        ep0 = from_seg_coords[-1]
+    else:
+        # Reverse direction, use first point
+        ep0 = from_seg_coords[0]
+    to_seg_coords = segments.loc[row['to_segment_fid']].geometry.coords
+    if row['to_lane_number'] >= 0:
+        # Forward direction, use first point
+        ep1 = to_seg_coords[0]
+    else:
+        # Reverse direction, use last point
+        ep1 = to_seg_coords[-1]
+    # coords returns (y, x), but distance needs (x, y).
+    xy0 = (ep0[1], ep0[0])
+    xy1 = (ep1[1], ep1[0])
+    # Calculate geodesic distance (assuming WGS-84, earth radius).
+    return distance.distance(xy0, xy1).m
 
 
 if __name__ == "__main__":
