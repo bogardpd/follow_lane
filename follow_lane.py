@@ -170,16 +170,18 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     from_fail = from_join[from_join['exists'].isna()]
     to_fail = to_join[to_join['exists'].isna()]
     if len(from_fail) > 0:
-        print(from_fail)
+        print(df_con_val.loc[df_con_val.index.intersection(from_fail.index)])
         raise ValueError(
-            "Missing matching 'to' lanes at 'from' connector fid(s) " +
-            str(from_fail.index.tolist())
+            f"Connector fid(s) {str(from_fail.index.tolist())} have 'from' "
+            "lanes with no matching 'to' lanes. Add matching 'to' lanes at "
+            "predecessor connectors."
         )
     if len(to_fail) > 0:
-        print(to_fail)
+        print(df_con_val.loc[df_con_val.index.intersection(to_fail.index)])
         raise ValueError(
-            "Missing matching 'from' lanes at 'to' connector fid(s) " +
-            str(to_fail.index.tolist())
+            f"Connector fid(s) {str(to_fail.index.tolist())} have 'tp' "
+            "lanes with no matching 'from' lanes. Add matching 'from' lanes "
+            "at successor connectors."
         )
 
     # Check that consecutive segments are adjacent.
