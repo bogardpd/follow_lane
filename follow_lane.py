@@ -125,13 +125,13 @@ def plot_segments(g, segments, start):
 def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     """Checks connectors for errors."""
 
-
     df_con_val = connectors.copy()
     gdf_seg = segments.copy()
 
     # Check if any connectors rows have null values.
     na_rows = df_con_val[df_con_val.isna().any(axis=1)]
     if len(na_rows) > 0:
+        print(na_rows)
         raise ValueError(
             f"Connector(s) with NA values: {na_rows.index.tolist()}"
         )
@@ -141,6 +141,7 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
         df_con_val['from_segment_fid'] == df_con_val['to_segment_fid']
     ]
     if len(self_rows) > 0:
+        print(self_rows)
         raise ValueError(
             f"Connector(s) with same from and to: {self_rows.index.tolist()}"
         )
@@ -169,11 +170,13 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     from_fail = from_join[from_join['exists'].isna()]
     to_fail = to_join[to_join['exists'].isna()]
     if len(from_fail) > 0:
+        print(from_fail)
         raise ValueError(
             "Missing matching 'to' lanes at 'from' connector fid(s) " +
             str(from_fail.index.tolist())
         )
     if len(to_fail) > 0:
+        print(to_fail)
         raise ValueError(
             "Missing matching 'from' lanes at 'to' connector fid(s) " +
             str(to_fail.index.tolist())
