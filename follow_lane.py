@@ -10,6 +10,7 @@ import geopandas as gpd
 import networkx as nx
 import matplotlib.pyplot as plt
 from geopy import distance
+from tabulate import tabulate
 
 
 Node = Tuple[int, int]
@@ -46,20 +47,24 @@ def follow_lane(
 
     # Find loops.
     print("Finding segments with loops...")
+    all_looped_segs = {}
     for node in g.nodes:
         looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
         if len(looped_segs) > 0:
-            print(
-                f"{format_node(node)} → "
-                f"{", ".join([format_node(ls) for ls in looped_segs])}"
-            )
+            if node[0] not in all_looped_segs:
+                all_looped_segs[node[0]] = []
+            for ls in looped_segs:
+                all_looped_segs[node[0]].append((node[1], ls[1]))
             nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
             nx.set_node_attributes(
                 g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
             )
-            looped_segs_same_lane = [l for l in looped_segs if l[1] == node[1]]
-            if len(looped_segs_same_lane) > 0:
-                print("\tSame lane!")
+
+    print(tabulate(
+        [[seg, format_lane_pairs(lp)] for seg, lp in all_looped_segs.items()],
+        headers=["Segment", "Lanes"],
+        tablefmt='github',
+    ))
 
     # Export GraphML.
     if '.graphml' in output_types:
@@ -194,9 +199,11 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
         print(dist_fail)
         raise ValueError("Consecutive segments exceed distance threshold")
 
-def format_node(node: Node):
-    """Formats a Node as a string."""
-    return f"{node[0]}:{node[1]}"
+def format_lane_pairs(pairs: List[Tuple]):
+    """Formats lane pairs as a string."""
+    pairs = sorted(pairs)
+    pairs_str = ", ".join([f"{p[0]}→{p[1]}" for p in pairs])
+    return pairs_str
 
 def _seg_distance(row, segments):
     """Calculates distance between two segments."""
