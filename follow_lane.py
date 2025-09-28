@@ -179,7 +179,7 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     if len(to_fail) > 0:
         print(df_con_val.loc[df_con_val.index.intersection(to_fail.index)])
         raise ValueError(
-            f"Connector fid(s) {str(to_fail.index.tolist())} have 'tp' "
+            f"Connector fid(s) {str(to_fail.index.tolist())} have 'to' "
             "lanes with no matching 'from' lanes. Add matching 'from' lanes "
             "at successor connectors."
         )
