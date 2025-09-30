@@ -46,25 +46,7 @@ def follow_lane(
     g = build_graph(connectors, allow_paint)
 
     # Find loops.
-    print("Finding segments with loops...")
-    all_looped_segs = {}
-    for node in g.nodes:
-        looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
-        if len(looped_segs) > 0:
-            if node[0] not in all_looped_segs:
-                all_looped_segs[node[0]] = []
-            for ls in looped_segs:
-                all_looped_segs[node[0]].append((node[1], ls[1]))
-            nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
-            nx.set_node_attributes(
-                g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
-            )
-
-    print(tabulate(
-        [[seg, format_lane_pairs(lp)] for seg, lp in all_looped_segs.items()],
-        headers=["Segment", "Lanes"],
-        tablefmt='github',
-    ))
+    g = find_seg_loops(g)
 
     # Export GraphML.
     if '.graphml' in output_types:
@@ -104,6 +86,36 @@ def build_graph(
         g.add_edge(n1, n2, crosses_paint=crosses_paint)
 
     print(f"Created {g}.")
+    return g
+
+def find_seg_loops(g: nx.DiGraph) -> nx.DiGraph:
+    """Finds loops returning to the same road segment.
+
+    This does not require returning to the same lane; any node which has
+    a descendant with a matching segment ID will be identified. (Thus,
+    not all segment loops will be directed graph loops; only segment
+    loops that return to the same lane will be directed graph loops.)
+    """
+    print("Finding segments with loops...")
+    all_looped_segs = {}
+    for node in g.nodes:
+        looped_segs = [d for d in nx.descendants(g, node) if d[0] == node[0]]
+        if len(looped_segs) > 0:
+            if node[0] not in all_looped_segs:
+                all_looped_segs[node[0]] = []
+            for ls in looped_segs:
+                all_looped_segs[node[0]].append((node[1], ls[1]))
+            nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
+            nx.set_node_attributes(
+                g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
+            )
+
+    print(tabulate(
+        [[seg, _format_lane_pairs(lp)] for seg, lp in all_looped_segs.items()],
+        headers=["Segment", "Lanes"],
+        tablefmt='github',
+    ))
+
     return g
 
 def plot_segments(g, segments, start):
@@ -199,7 +211,7 @@ def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
         print(dist_fail)
         raise ValueError("Consecutive segments exceed distance threshold")
 
-def format_lane_pairs(pairs: List[Tuple]):
+def _format_lane_pairs(pairs: List[Tuple]):
     """Formats lane pairs as a string."""
     pairs = sorted(pairs)
     pairs_str = ", ".join([f"{p[0]}→{p[1]}" for p in pairs])
