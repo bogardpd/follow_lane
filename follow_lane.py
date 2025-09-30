@@ -1,14 +1,13 @@
 """Follows a road lane through GeoPackage data."""
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 import argparse
 import sqlite3
 
 import pandas as pd
 import geopandas as gpd
 import networkx as nx
-import matplotlib.pyplot as plt
 from geopy import distance
 from tabulate import tabulate
 
@@ -18,11 +17,14 @@ DIST_THRESHOLD_M = 1.0 # Maximum meter distance between segments
 
 def follow_lane(
     source: Path,
-    start: List[int],
-    output: List[Path],
+    start: Optional[Node] = None,
+    end: Optional[Node] = None,
+    output: Optional[List[Path]] = None,
     allow_paint: bool = False,
 ) -> None:
     """Follows a lane."""
+    if output is None:
+        output = []
     output_types = {o.suffix: o for o in output}
 
     # Load dataframes from source.
@@ -48,14 +50,13 @@ def follow_lane(
     # Find loops.
     g = find_seg_loops(g)
 
+    if start is not None and end is not None:
+        g = find_paths(g, start, end)
+
     # Export GraphML.
     if '.graphml' in output_types:
         nx.write_graphml(g, output_types['.graphml'])
         print(f"Wrote graph to {output_types['.graphml']}.")
-
-    # Plot segments.
-    if start is not None:
-        plot_segments(g, segments, start)
 
 def build_graph(
     connectors: pd.DataFrame,
@@ -64,6 +65,11 @@ def build_graph(
     """Creates a directed graph from connectors data."""
     print("Building graph...")
     g = nx.DiGraph()
+    defaults = {
+        'is_seg_loop_source': False,
+        'is_seg_loop_sink': False,
+        'is_path': False,
+    }
 
     for _, r in connectors.iterrows():
         crosses_paint = bool(r['crosses_paint'] == 1)
@@ -74,18 +80,23 @@ def build_graph(
         g.add_node(n1,
             segment=str(r['from_segment_fid']),
             lane=str(r['from_lane_number']),
-            is_seg_loop_source = False,
-            is_seg_loop_sink = False,
+            **defaults,
         )
         g.add_node(n2,
             segment=str(r['to_segment_fid']),
             lane=str(r['to_lane_number']),
-            is_seg_loop_source = False,
-            is_seg_loop_sink = False,
+            **defaults,
         )
         g.add_edge(n1, n2, crosses_paint=crosses_paint)
 
     print(f"Created {g}.")
+    return g
+
+def find_paths(g: nx.DiGraph, start: Node, end: Node) -> nx.DiGraph:
+    """Find paths between nodes and set is_path node attributes."""
+    paths = nx.all_simple_paths(g, source=start, target=end)
+    nodes = [node for path in paths for node in path]
+    nx.set_node_attributes(g, {node: True for node in nodes}, 'is_path')
     return g
 
 def find_seg_loops(g: nx.DiGraph) -> nx.DiGraph:
@@ -117,27 +128,6 @@ def find_seg_loops(g: nx.DiGraph) -> nx.DiGraph:
     ))
 
     return g
-
-def plot_segments(g, segments, start):
-    """Plots a graph of road segments from a starting node."""
-    start_node = tuple(start)
-    lanes_forward: List[Node] = sorted(nx.descendants(g, start_node))
-    fids_forward: List[int] = [l[0] for l in lanes_forward]
-    lanes_backward: List[Node] = sorted(nx.ancestors(g, start_node))
-    fids_backward: List[int] = [l[0] for l in lanes_backward]
-
-    fig, ax = plt.subplots(1, 1)
-
-    gdf_start = segments[segments.index.isin([start_node[0]])]
-    gdf_forward = segments[segments.index.isin(fids_forward)]
-    gdf_backward = segments[segments.index.isin(fids_backward)]
-    if len(gdf_backward) > 0:
-        gdf_backward.plot(ax=ax, label="Backward", color='orange')
-    if len(gdf_forward) > 0:
-        gdf_forward.plot(ax=ax, label="Forward", color='blue')
-    gdf_start.plot(ax=ax, label="Start", color='black', linewidth=4)
-    fig.tight_layout()
-    plt.show()
 
 def validate_connectors(connectors: pd.DataFrame, segments: gpd.GeoDataFrame):
     """Checks connectors for errors."""
@@ -250,7 +240,13 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument('--start',
-        help="Node to start following from",
+        help="Node to start path from",
+        nargs=2,
+        metavar=('fid', 'lane'),
+        type=int,
+    )
+    parser.add_argument('--end',
+        help="Node to end path at",
         nargs=2,
         metavar=('fid', 'lane'),
         type=int,
@@ -267,4 +263,9 @@ if __name__ == "__main__":
         default=False,
     )
     args = parser.parse_args()
-    follow_lane(args.source, args.start, args.output, args.paint)
+    follow_lane(
+        args.source,
+        tuple(args.start), tuple(args.end),
+        args.output,
+        args.paint,
+    )
