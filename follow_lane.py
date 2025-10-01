@@ -263,17 +263,11 @@ if __name__ == "__main__":
         default=False,
     )
     args = parser.parse_args()
-    if args.start is None:
-        start = None
-    else:
-        start = tuple(args.start)
-    if args.end is None:
-        end = None
-    else:
-        start = tuple(args.end)
+    arg_start = None if args.start is None else tuple(args.start)
+    arg_end = None if args.end is None else tuple (args.end)
     follow_lane(
         args.source,
-        start, end,
+        arg_start, arg_end,
         args.output,
         args.paint,
     )
