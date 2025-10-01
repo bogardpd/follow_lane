@@ -17,7 +17,7 @@ Accepts a starting road segment and lane number and follows the specified lane t
 Options
 
 - `--source SOURCE` (required) GeoPackage source path
-- `--start fid lane` (optional) Starts following from the node with the specified fid and lane number (zero-indexed)
+- `--start fid lane --end fid lane` (optional) Traces paths from the start fid and lane number to the end fid and lane number
 - `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
 - `--paint` If present, allows starting or ending lanes to cross dotted paint lines.
 
