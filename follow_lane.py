@@ -17,8 +17,6 @@ DIST_THRESHOLD_M = 1.0 # Maximum meter distance between segments
 
 def follow_lane(
     source: Path,
-    start: Optional[Node] = None,
-    end: Optional[Node] = None,
     output: Optional[List[Path]] = None,
     allow_paint: bool = False,
 ) -> None:
@@ -49,9 +47,6 @@ def follow_lane(
 
     # Find loops.
     g = find_seg_loops(g)
-
-    if start is not None and end is not None:
-        g = find_paths(g, start, end)
 
     # Export GraphML.
     if '.graphml' in output_types:
@@ -121,11 +116,17 @@ def find_seg_loops(g: nx.DiGraph) -> nx.DiGraph:
                 g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
             )
 
+    # Print looped segments to console.
     print(tabulate(
         [[seg, _format_lane_pairs(lp)] for seg, lp in all_looped_segs.items()],
         headers=["Segment", "Lanes"],
         tablefmt='github',
     ))
+
+    # Add is_path attributes between looped segments.
+    for seg, loops in all_looped_segs.items():
+        for loop in loops:
+            find_paths(g, (seg, loop[0]), (seg, loop[1]))
 
     return g
 
@@ -208,7 +209,11 @@ def _format_lane_pairs(pairs: List[Tuple]):
     return pairs_str
 
 def _seg_distance(row, segments):
-    """Calculates distance between two segments."""
+    """Calculates distance in meters between two segments.
+
+    Segment geometry should use the WGS-84 CRS. If another CRS is used,
+    results may not be accurate.
+    """
     from_seg_coords = segments.loc[row['from_segment_fid']].geometry.coords
     if row['from_lane_number'] >= 0:
         # Forward direction, use last point
@@ -226,7 +231,7 @@ def _seg_distance(row, segments):
     # coords returns (y, x), but distance needs (x, y).
     xy0 = (ep0[1], ep0[0])
     xy1 = (ep1[1], ep1[0])
-    # Calculate geodesic distance (assuming WGS-84, earth radius).
+    # Calculate geodesic distance in meters.
     return distance.distance(xy0, xy1).m
 
 
@@ -238,18 +243,6 @@ if __name__ == "__main__":
         help="GeoPackage source path",
         type=Path,
         required=True,
-    )
-    parser.add_argument('--start',
-        help="Node to start path from",
-        nargs=2,
-        metavar=('fid', 'lane'),
-        type=int,
-    )
-    parser.add_argument('--end',
-        help="Node to end path at",
-        nargs=2,
-        metavar=('fid', 'lane'),
-        type=int,
     )
     parser.add_argument('--output',
         help="Output path(s) (supports .graphml)",
@@ -263,11 +256,8 @@ if __name__ == "__main__":
         default=False,
     )
     args = parser.parse_args()
-    arg_start = None if args.start is None else tuple(args.start)
-    arg_end = None if args.end is None else tuple (args.end)
     follow_lane(
         args.source,
-        arg_start, arg_end,
         args.output,
         args.paint,
     )

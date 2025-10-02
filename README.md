@@ -8,7 +8,7 @@ Traces individual road lanes in GeoPackage data.
 
 ### follow_lane
 
-Accepts a starting road segment and lane number and follows the specified lane through its branches.
+Takes a network of lanes and determines if any of them loop back to the same road segment (either in the same lane or a different lane).
 
 #### Usage
 
@@ -17,13 +17,12 @@ Accepts a starting road segment and lane number and follows the specified lane t
 Options
 
 - `--source SOURCE` (required) GeoPackage source path.
-- `--start fid lane --end fid lane` (optional) Traces paths from the start fid and lane number to the end fid and lane number.
 - `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
 - `--paint` If present, allows starting or ending lanes to cross dotted paint lines.
 
-Using data source roads.gpkg, follow the leftmost lane of feature 12345 and export to roads.graphml:
+Using data source roads.gpkg, find segment loops and export to roads.graphml:
 
-`python follow_lane.py --source roads.gpkg --start 12345 0 --output roads.graphml`
+`python follow_lane.py --source roads.gpkg --output roads.graphml`
 
 ## Lanes
 
