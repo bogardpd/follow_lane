@@ -60,6 +60,6 @@ In most cases, lanes will line up (lane 0 in segment n will connect to lane 0 in
 
 Lane numbering is based on the lane’s direction of travel relative to the direction of the LineString geometry. Lanes which travel in the direction of the LineString are _forward_ lanes, and lanes which travel opposite to the LineString are _reverse_ lanes.
 
-For regions that drive on the right, forward lanes are numbered starting with 0 for the leftmost lane and increasing from there (0, 1, 2…). Reverse lanes are numbered starting with −1 for the leftmost lane and decreasing from there (−1, −2, -3…)
+For regions that drive on the right, forward lanes are numbered starting with 0 for the leftmost lane and increasing from there (0, 1, 2…). Reverse lanes are numbered starting with −1 for the leftmost lane and decreasing from there (−1, −2, −3…)
 
 For regions that drive on the left, numbering starts with the rightmost lane in each direction, but otherwise follows the same rules.
