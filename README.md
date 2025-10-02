@@ -16,8 +16,8 @@ Accepts a starting road segment and lane number and follows the specified lane t
 
 Options
 
-- `--source SOURCE` (required) GeoPackage source path
-- `--start fid lane --end fid lane` (optional) Traces paths from the start fid and lane number to the end fid and lane number
+- `--source SOURCE` (required) GeoPackage source path.
+- `--start fid lane --end fid lane` (optional) Traces paths from the start fid and lane number to the end fid and lane number.
 - `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
 - `--paint` If present, allows starting or ending lanes to cross dotted paint lines.
 
@@ -47,9 +47,19 @@ A table documenting the interaction of lanes between road segments, with the fol
 |-------|------|-------------|
 | fid   | int64 | Connection feature ID |
 | from_segment_fid | int64 | The segment a lane is coming from (in the direction of travel) |
-| from_lane_number | int64 | The lane number within the segment the lane is coming from. **For regions that drive on the right**, lanes traveling in the same direction as the segment's LineString are numbered starting with 0 for the leftmost lane, and increase from there (0, 1, 2…). For lanes traveling opposite the LineString, the leftmost lane is numbered starting at -1 and decreasing from there (-1, -2, -3…). **For regions that drive on the left**, the numbering should start with the rightmost lane in each direction, but otherwise follows the same rules. |
+| from_lane_number | int64 | The lane number within the segment the lane is coming from. See [Lane Numbering](#lane-numbering) below. |
 | to_segment_fid | int64 | The segment a lane is going to (in the direction of travel) |
-| to_lane_number | int64 | The lane number within the segment the lane is going to. **For regions that drive on the right**, lanes traveling in the same direction as the segment's LineString are numbered starting with 0 for the leftmost lane, and increase from there (0, 1, 2…). For lanes traveling opposite the LineString, the leftmost lane is numbered starting at -1 and decreasing from there (-1, -2, -3…). **For regions that drive on the left**, the numbering should start with the rightmost lane in each direction, but otherwise follows the same rules. |
+| to_lane_number | int64 | The lane number within the segment the lane is going to. See [Lane Numbering](#lane-numbering) below. |
 | crosses_paint | bool | If a lane begins or ends in such a way that a driver can't enter it (new lanes) or exit it (ending lanes) without crossing a paint line, this should be set to true. Otherwise, false. |
 
 In most cases, lanes will line up (lane 0 in segment n will connect to lane 0 in segment n + 1). However, this can also be used to document lanes splitting (lane 0 could go to two different lanes in the same segment, or a different lane in two different segments) or merging (two different lanes in the same segment become connect to a single lane in the following segment, or lanes from two different segments connect to a single lane in another segment). Each lane connection will have its own row.
+
+## Lane Numbering
+
+![Diagram showing lane numbering](/images/lane_numbering.png)
+
+Lane numbering is based on the lane’s direction of travel relative to the direction of the LineString geometry. Lanes which travel in the direction of the LineString are _forward_ lanes, and lanes which travel opposite to the LineString are _reverse_ lanes.
+
+For regions that drive on the right, forward lanes are numbered starting with 0 for the leftmost lane and increasing from there (0, 1, 2…). Reverse lanes are numbered starting with −1 for the leftmost lane and decreasing from there (−1, −2, -3…)
+
+For regions that drive on the left, numbering starts with the rightmost lane in each direction, but otherwise follows the same rules.
