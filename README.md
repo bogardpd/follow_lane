@@ -1,9 +1,6 @@
 # follow_lane
 Traces individual road lanes in GeoPackage data.
 
-> [!NOTE]
-> This project is in progress, and significant functionality has not yet been implemented.
-
 ## Usage
 
 ### follow_lane
