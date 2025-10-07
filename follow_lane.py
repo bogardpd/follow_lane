@@ -17,13 +17,14 @@ DIST_THRESHOLD_M = 1.0 # Maximum meter distance between segments
 
 def follow_lane(
     source: Path,
-    output: Optional[List[Path]] = None,
+    output: Optional[Path] = None,
     allow_paint: bool = False,
 ) -> None:
     """Follows a lane."""
     if output is None:
-        output = []
-    output_types = {o.suffix: o for o in output}
+        output_types = {}
+    else:
+        output_types = {output.suffix: output}
 
     # Load dataframes from source.
     con = sqlite3.connect(source)
@@ -245,10 +246,9 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument('--output',
-        help="Output path(s) (supports .graphml)",
-        nargs='+',
+        help="Output path (supports .graphml)",
         type=Path,
-        default=[],
+        default=None,
     )
     parser.add_argument('--paint',
         help="Allow paint line crossings for lanes starting or ending",

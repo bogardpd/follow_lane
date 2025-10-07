@@ -14,7 +14,7 @@ Takes a network of lanes and determines if any of them loop back to the same roa
 Options
 
 - `--source SOURCE` (required) GeoPackage source path.
-- `--output OUTPUT [OUTPUT ...]` (optional) Output file(s). Supports **.graphml**.
+- `--output OUTPUT [OUTPUT ...]` (optional) GraphML output file.
 - `--paint` If present, allows starting or ending lanes to cross dotted paint lines.
 
 Using data source roads.gpkg, find segment loops and export to roads.graphml:
