@@ -63,7 +63,7 @@ def build_graph(
     g = nx.DiGraph()
     defaults = {
         'is_seg_loop_source': False,
-        'is_seg_loop_sink': False,
+        'is_seg_loop_target': False,
         'is_path': False,
     }
 
@@ -114,7 +114,7 @@ def find_seg_loops(g: nx.DiGraph) -> nx.DiGraph:
                 all_looped_segs[node[0]].append((node[1], ls[1]))
             nx.set_node_attributes(g, {node: True}, 'is_seg_loop_source')
             nx.set_node_attributes(
-                g, {ls: True for ls in looped_segs}, 'is_seg_loop_sink',
+                g, {ls: True for ls in looped_segs}, 'is_seg_loop_target',
             )
 
     # Print looped segments to console.
