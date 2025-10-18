@@ -1,5 +1,6 @@
 # follow_lane
-Traces individual road lanes in GeoPackage data.
+
+Traces individual road lanes in GeoPackage data. Used for the [Circling the Beltway](https://paulbogard.net/posts/circling-the-beltway-dc/) project.
 
 ## Usage
 
